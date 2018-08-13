@@ -105,7 +105,7 @@ end
 
 function cc.MoveBy:startWithTarget(target)
     cc.ActionInterval.startWithTarget(self, target)
-    self._previousPositionX, self._previousPositionY, self._previousPositionZ = cc.Wrapper.GetLocalPosition(target)
+    self._previousPositionX, self._previousPositionY, self._previousPositionZ = cc.Wrapper.GetLocalPosition(self._target)
     self._startPositionX, self._startPositionY, self._startPositionZ = self._previousPositionX, self._previousPositionY, self._previousPositionZ
 end
 
@@ -153,7 +153,7 @@ end
 
 function cc.MoveTo:startWithTarget(target)
     cc.MoveBy.startWithTarget(self, target)
-    local oldX, oldY, oldZ = cc.Wrapper.GetLocalPosition(target)
+    local oldX, oldY, oldZ = cc.Wrapper.GetLocalPosition(self._target)
     self._positionDeltaX = self._endPositionX - oldX
     self._positionDeltaY = self._endPositionY - oldY
     self._positionDeltaZ = self._endPositionZ - oldZ
@@ -307,7 +307,7 @@ end
 
 function cc.ScaleTo:startWithTarget(target)
     cc.ActionInterval.startWithTarget(self, target);
-    self._startScaleX, self._startScaleY, self._startScaleZ = cc.Wrapper.GetLocalScale(target)
+    self._startScaleX, self._startScaleY, self._startScaleZ = cc.Wrapper.GetLocalScale(self._target)
     self._deltaX = self._endScaleX - self._startScaleX;
     self._deltaY = self._endScaleY - self._startScaleY;
     self._deltaZ = self._endScaleZ - self._startScaleZ;
@@ -344,7 +344,7 @@ end
 
 function cc.FadeTo:startWithTarget(target)
     cc.ActionInterval.startWithTarget(self, target);
-    self._fromOpacity = cc.Wrapper.GetAlpha(target)
+    self._fromOpacity = cc.Wrapper.GetAlpha(self._target)
 end
 
 function cc.FadeTo:update(time)
@@ -373,7 +373,7 @@ function cc.FadeIn:startWithTarget(target)
     
     self._toOpacity = 1.0
     
-    self._fromOpacity = cc.Wrapper.GetAlpha(target)
+    self._fromOpacity = cc.Wrapper.GetAlpha(self._target)
 end
 
 cc.FadeOut = cc.FadeOut or BaseClass(cc.FadeTo)
@@ -391,7 +391,7 @@ function cc.FadeOut:startWithTarget(target)
     
     self._toOpacity = 0.0
     
-    self._fromOpacity = cc.Wrapper.GetAlpha(target)
+    self._fromOpacity = cc.Wrapper.GetAlpha(self._target)
 end
 
 function cc.FadeOut:reverse()
@@ -401,96 +401,125 @@ end
 --Fade end
 
 --Rotate start
---Cat_Todo : 还没好，先别用
--- cc.RotateTo = cc.RotateTo or BaseClass(cc.ActionInterval)
+--[rotate_type == 1 z轴]
+--[rotate_type == 2 x轴]
+--[rotate_type == 3 y轴]
+cc.RotateTo = cc.RotateTo or BaseClass(cc.ActionInterval)
 
--- function cc.RotateTo:__init(duration, dstAngle)
---     self._dstAngle = 0
---     self._startAngle = 0
---     self._diffAngle = 0
---     self:initWithDuration(duration, dstAngle)
--- end
+function cc.RotateTo:__init(duration, dstAngle, rotate_type)--0.1, targetRotate
+    self._dstAngle = 0
+    self._startAngle = 0
+    self._diffAngle = 0
+    self.rotate_type = rotate_type or 1
+    self:initWithDuration(duration, dstAngle)
+end
 
--- function cc.RotateTo:initWithDuration(duration, dstAngle)
---     cc.ActionInterval.initWithDuration(self, duration)
---     self._dstAngle = dstAngle
--- end
+function cc.RotateTo:initWithDuration(duration, dstAngle)
+    cc.ActionInterval.initWithDuration(self, duration)
+    self._dstAngle = dstAngle
+end
 
--- function cc.RotateTo:clone()
---     return cc.RotateTo.New(self._duration, self._dstAngle)
--- end
+function cc.RotateTo:clone()
+    return cc.RotateTo.New(self._duration, self._dstAngle)
+end
 
--- function cc.RotateTo:calculateAngles(startAngle, diffAngle, dstAngle)
---     if (startAngle > 0) then
---         startAngle = math.fmod(startAngle, 360.0)
---     else
---         startAngle = math.fmod(startAngle, -360.0)
---     end
+function cc.RotateTo:calculateAngles(startAngle, diffAngle, dstAngle)
+    if (startAngle > 0) then
+        startAngle = math.fmod(startAngle, 360.0)
+    else
+        startAngle = math.fmod(startAngle, -360.0)
+    end
 
---     diffAngle = dstAngle - startAngle
---     if (diffAngle > 180) then
---         diffAngle = diffAngle - 360
---     end
---     if (diffAngle < -180) then
---         diffAngle = diffAngle + 360
---     end
---     return startAngle, diffAngle
--- end
+    diffAngle = dstAngle - startAngle
+    if (diffAngle > 180) then
+        diffAngle = diffAngle - 360
+    end
+    if (diffAngle < -180) then
+        diffAngle = diffAngle + 360
+    end
+    return startAngle, diffAngle
+end
 
--- function cc.RotateTo:startWithTarget(target)
---     cc.ActionInterval.startWithTarget(self, target)
+function cc.RotateTo:startWithTarget(target)
+    cc.ActionInterval.startWithTarget(self, target)
+    self._startAngle = target.eulerAngles
+    if self.rotate_type == 1 then
+        self._startAngle_num, self._diffAngle = self:calculateAngles(self._startAngle.z, self._diffAngle, self._dstAngle)
+    elseif self.rotate_type == 2 then
+        self._startAngle_num, self._diffAngle = self:calculateAngles(self._startAngle.x, self._diffAngle, self._dstAngle)
+    elseif self.rotate_type == 3 then
+        self._startAngle_num, self._diffAngle = self:calculateAngles(self._startAngle.y, self._diffAngle, self._dstAngle)
+    end
+end
+
+function cc.RotateTo:update(time)
+    if (self._target) then
+        local newRotation = self._startAngle_num + self._diffAngle * time
+        if self.rotate_type == 1 then--Z
+            self._target.localRotation = Quaternion.Euler(0,0,newRotation)
+        elseif self.rotate_type == 2 then--X
+            self._target.localRotation = Quaternion.Euler(newRotation,0,0)
+        elseif self.rotate_type == 3 then--Y
+            self._target.localRotation = Quaternion.Euler(0,newRotation,0)
+        end
+    end
+end
+
+function cc.RotateTo:reverse()
+    print("RotateTo doesn't support the 'reverse' method")
+    return nil
+end
+
+
+--[rotate_type == 1 z轴]
+--[rotate_type == 2 x轴]
+--[rotate_type == 3 y轴]
+cc.RotateBy = cc.RotateBy or BaseClass(cc.ActionInterval)
+
+function cc.RotateBy:__init(duration, deltaAngle, rotate_type)
+    self._deltaAngle = 0
+    self._startAngle = 0
+    self:initWithDuration(duration, deltaAngle)
+    self.rotate_type = rotate_type or 1
+end
+
+function cc.RotateBy:initWithDuration(duration, deltaAngle)
+    cc.ActionInterval.initWithDuration(self, duration)
+    self._deltaAngle = deltaAngle
+end
+
+function cc.RotateBy:clone()
+    return cc.RotateBy.New(self._duration, self._deltaAngle)
+end
+
+function cc.RotateBy:startWithTarget(target)
+    cc.ActionInterval.startWithTarget(self, target)
     
---     self._startAngle = cc.Wrapper.GetLocalRotation(target)
+    self._startAngle = target.eulerAngles
+end
 
---     self._startAngle, self._diffAngle = self:calculateAngles(self._startAngle, self._diffAngle, self._dstAngle)
--- end
+function cc.RotateBy:update(time)
+    if (self._target) then
+        if self.rotate_type == 1 then--Z轴
+            self._startAngle_num = self._startAngle.z
+            local newRotation = self._startAngle_num + self._deltaAngle * time
+            self._target.localRotation = Quaternion.Euler(0,0,newRotation)
+        elseif self.rotate_type == 2 then--X轴
+            self._startAngle_num = self._startAngle.x
+            local newRotation = self._startAngle_num + self._deltaAngle * time
+            self._target.localRotation = Quaternion.Euler(newRotation,0,0)
+        elseif self.rotate_type == 3 then--Y轴
+            self._startAngle_num = self._startAngle.y
+            local newRotation = self._startAngle_num + self._deltaAngle * time
+            self._target.localRotation = Quaternion.Euler(0,newRotation,0)
+        end
+    end
+end
 
--- function cc.RotateTo:update(time)
---     if (self._target) then
---         local newRotation = self._startAngle + self._diffAngle * time
---         self._target:SetFloat(ImageBoxProperty.Rotation, newRotation)
---     end
--- end
-
--- function cc.RotateTo:reverse()
---     print("RotateTo doesn't support the 'reverse' method")
---     return nil
--- end
-
--- cc.RotateBy = cc.RotateBy or BaseClass(cc.ActionInterval)
-
--- function cc.RotateBy:__init(duration, deltaAngle)
---     self._deltaAngle = 0
---     self._startAngle = 0
---     self:initWithDuration(duration, deltaAngle)
--- end
-
--- function cc.RotateBy:initWithDuration(duration, deltaAngle)
---     cc.ActionInterval.initWithDuration(self, duration)
---     self._deltaAngle = deltaAngle
--- end
-
--- function cc.RotateBy:clone()
---     return cc.RotateBy.New(self._duration, self._deltaAngle)
--- end
-
--- function cc.RotateBy:startWithTarget(target)
---     cc.ActionInterval.startWithTarget(self, target)
-    
---     self._startAngle = self._target:GetFloat(ImageBoxProperty.Rotation)
--- end
-
--- function cc.RotateBy:update(time)
---     if (self._target) then
---         local newRotation = self._startAngle + self._deltaAngle * time
---         self._target:SetFloat(ImageBoxProperty.Rotation, newRotation)
---     end
--- end
-
--- function cc.RotateBy:reverse()
---     return cc.RotateBy.New(self._duration, -self._deltaAngle)
--- end
---Rotate end
+function cc.RotateBy:reverse()
+    return cc.RotateBy.New(self._duration, -self._deltaAngle, self.rotate_type)
+end
+-- Rotate end
 
 --Repeat start
 cc.Repeat = cc.Repeat or BaseClass(cc.ActionInterval)
@@ -730,7 +759,7 @@ end
 function cc.SizeBy:startWithTarget(target)
     cc.ActionInterval.startWithTarget(self, target)
 
-    self._previousSizeWidht,self._previousSizeHeight = cc.Wrapper.GetSize(target)
+    self._previousSizeWidht,self._previousSizeHeight = cc.Wrapper.GetSize(self._target)
     self._startSizeX,self._startSizeY = self._previousSizeWidht,self._previousSizeHeight
 end
 
@@ -774,7 +803,7 @@ end
 
 function cc.SizeTo:startWithTarget(target)
     cc.SizeBy.startWithTarget(self, target)
-    local oldW,oldH = cc.Wrapper.GetSize(target)
+    local oldW,oldH = cc.Wrapper.GetSize(self._target)
     self._SizeDeltaW = self._endSizeW - oldW
     self._SizeDeltaH = self._endSizeH - oldH
 end
@@ -812,7 +841,7 @@ end
 
 function cc.BezierBy:startWithTarget(target)
     cc.ActionInterval.startWithTarget(self, target)
-    local x, y = cc.Wrapper.GetLocalPosition(target)
+    local x, y = cc.Wrapper.GetLocalPosition(self._target)
     self._startPosition = {x=x, y = y}
     self._previousPosition = {x=x, y = y}
 end

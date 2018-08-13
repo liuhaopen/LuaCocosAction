@@ -29,7 +29,10 @@ function cc.Action:isDone()
 end
 
 function cc.Action:startWithTarget(target)
-	self._target = target
+    --如果已经设置过了就不要再覆盖了
+    if not self._target then
+	    self._target = target
+    end
     self._originalTarget = target
 end
 

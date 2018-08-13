@@ -35,12 +35,63 @@ function cc.Wrapper.SetLocalRotation( node, x, y, z )
 	SetLocalRotation(node, x, y, z)
 end
 
+function cc.Wrapper.TryGetReal(tbl, key)
+	return tbl[key]
+end
+
+function cc.Wrapper.TryGet( tbl, key )
+	local is_ok = pcall(cc.Wrapper.TryGetReal, tbl, key)
+	return is_ok
+end
+
 function cc.Wrapper.GetAlpha( node )
-	
+	if node then
+		local alpha = nil
+		if cc.Wrapper.TryGet(node, "alpha") then
+			alpha = node.alpha
+		elseif cc.Wrapper.TryGet(node, "color") then
+			alpha = node.color.a
+		else
+			local image = node:GetComponent("Image")
+			if image ~= nil then
+				local r,g,b,a = image.color:Get()
+				alpha = a
+			else
+				local imageEx = node:GetComponent("ImageExtend")
+				alpha = imageEx.alpha
+				if imageEx ~= nil then
+					local text = node:GetComponent("Text")
+					alpha = text.alpha
+				end
+			end
+		end
+		return alpha
+	end
 end
 
 function cc.Wrapper.SetAlpha( node, alpha )
-	
+	if node and alpha then
+		if cc.Wrapper.TryGet(node, "color") then
+			node.color = Color(node.color.r,node.color.g,node.color.b,alpha)
+		elseif cc.Wrapper.TryGet(node, "SetAlpha") then	
+			node:SetAlpha(alpha)
+		else
+			--尽量为特定的action用setTarget传入特定的组件
+			local image = node:GetComponent("Image")
+			if image ~= nil then
+				local r,g,b,a = image.color:Get()
+				image.color = Color.New(r,g,b,alpha)
+			else
+				local imageEx = node:GetComponent("ImageExtend")
+				if imageEx ~= nil then
+					imageEx.alpha = alpha
+				else
+					local text = node:GetComponent("Text")
+					text.color = Color(text.color.r,text.color.g,text.color.b,alpha)
+				end
+			end
+		end
+	end
 end
 
 function cc.Wrapper.GetSize( node )
