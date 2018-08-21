@@ -160,3 +160,47 @@ function cc.Alpha:update(time)
     cc.Wrapper.SetAlpha(self._target, self.new_alpha)
 end
 --Alpha end
+
+--Scale start
+cc.Scale = cc.Scale or BaseClass(cc.ActionInstant)
+
+function cc.Scale:__init(scale_x, scale_y, scale_z)
+    self:initWithScale(scale_x, scale_y, scale_z)
+end
+
+function cc.Scale:initWithScale( scale_x, scale_y, scale_z )
+    self.scale_x = scale_x or 1
+    self.scale_y = scale_y or 1
+    self.scale_z = scale_z or 1
+end
+
+function cc.Scale:clone()
+    return cc.Scale.New(self.scale_x, self.scale_y, self.scale_z)
+end
+
+function cc.Scale:update(time)
+    if not self._target then return end
+    cc.Wrapper.SetLocalScale(self._target, self.scale_x, self.scale_y, self.scale_z)
+end
+--Scale end
+
+--Text start
+cc.Text = cc.Text or BaseClass(cc.ActionInstant)
+
+function cc.Text:__init(new_txt)
+    self:initWithText(new_txt)
+end
+
+function cc.Text:initWithText( new_txt )
+    self.new_txt = new_txt
+end
+
+function cc.Text:clone()
+    return cc.Text.New(self.new_txt)
+end
+
+function cc.Text:update(time)
+    if not self._target then return end
+    cc.Wrapper.SetText(self._target, self.new_txt)
+end
+--Text end
