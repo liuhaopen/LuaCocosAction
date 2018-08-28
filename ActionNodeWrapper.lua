@@ -11,8 +11,24 @@ function cc.Wrapper.GetLocalPosition( node )
 	return GetLocalPosition(node)
 end
 
+function cc.Wrapper.SetAnchoredPosition( node, x, y )
+	SetAnchoredPosition(node, x, y)
+end
+
+function cc.Wrapper.GetAnchoredPosition( node )
+	return GetAnchoredPosition(node)
+end
+
+function cc.Wrapper.SetPosition( node, x, y, z )
+	SetGlobalPosition(node, x, y, z)
+end
+
+function cc.Wrapper.GetPosition( node )
+	return GetGlobalPosition(node)
+end
+
 function cc.Wrapper.SetVisible( node, is_show )
-	SetVisible(node)
+	SetVisible(node, is_show)
 end
 
 function cc.Wrapper.GetVisible( node )
@@ -106,5 +122,17 @@ function cc.Wrapper.Delete( node )
 	if node ~= nil then
 		node:DeleteMe()
 		node = nil
+	end
+end
+
+function cc.Wrapper.DestroyObject( node )
+	if node and node.gameObject then
+		destroy(node.gameObject)
+	end
+end
+
+function cc.Wrapper.SetText( node, txt )
+	if node then
+		node.text = txt
 	end
 end

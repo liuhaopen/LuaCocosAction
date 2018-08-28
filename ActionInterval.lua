@@ -88,30 +88,65 @@ function cc.ActionInterval:initWithDuration(d)
     return true
 end
 
+cc.MoveTypeMap = cc.MoveTypeMap or {
+    ["AnchoredPos"] = {GetFunc=cc.Wrapper.GetAnchoredPosition, SetFunc=cc.Wrapper.SetAnchoredPosition},
+    ["LocalPos"] = {GetFunc=cc.Wrapper.GetLocalPosition, SetFunc=cc.Wrapper.SetLocalPosition},
+    ["Pos"] = {GetFunc=cc.Wrapper.GetPosition, SetFunc=cc.Wrapper.SetPosition},
+}
 --MoveBy start
 cc.MoveBy = cc.MoveBy or BaseClass(cc.ActionInterval)
-
+--别用.New了,用create前缀的接口
 function cc.MoveBy:__init(duration, delta_x, delta_y, delta_z)
-    self:initWithDuration(duration, delta_x, delta_y, delta_z)
+    self:initWithMoveType(duration, delta_x, delta_y, delta_z, "LocalPos")
+end
+--移动节点的anchoredPosition
+function cc.MoveBy.createAnchoredType( duration, x, y )
+    local action = cc.MoveBy.New()
+    action:initWithMoveType(duration, x, y, 0, "AnchoredPos")
+    return action
+end
+--移动节点的position绝对坐标
+function cc.MoveBy.createAbsType( duration, x, y, z )
+    local action = cc.MoveBy.New()
+    action:initWithMoveType(duration, x, y, z, "Pos")
+    return action
+end
+--移动节点的localPosition
+function cc.MoveBy.createLocalType( duration, x, y, z )
+    local action = cc.MoveBy.New()
+    action:initWithMoveType(duration, x, y, z, "LocalPos")
+    return action
+end
+
+function cc.MoveBy:initWithMoveType(duration, delta_x, delta_y, delta_z, move_type)
+    cc.ActionInterval.initWithDuration(self, duration)
+    self.move_type = move_type
+    self._positionDeltaX = delta_x or 0
+    self._positionDeltaY = delta_y or 0
+    self._positionDeltaZ = delta_z or 0
 end
 
 function cc.MoveBy:clone()
-    return cc.MoveBy.New(self._duration, self._positionDeltaX, self._positionDeltaY, self._positionDeltaZ)
+    local action = cc.MoveBy.New()
+    action:initWithMoveType(self._duration, self._positionDeltaX, self._positionDeltaY, self._positionDeltaZ, self.move_type)
+    return action
 end
 
 function cc.MoveBy:reverse()
-    return cc.MoveBy.New(self._duration, self._positionDeltaX and -self._positionDeltaX, self._positionDeltaY and -self._positionDeltaY, self._positionDeltaZ and -self._positionDeltaZ)
+    local action = cc.MoveBy.New()
+    action:initWithMoveType(self._duration, self._positionDeltaX and -self._positionDeltaX, self._positionDeltaY and -self._positionDeltaY, self._positionDeltaZ and -self._positionDeltaZ, self.move_type)
+    return action
 end
 
 function cc.MoveBy:startWithTarget(target)
     cc.ActionInterval.startWithTarget(self, target)
-    self._previousPositionX, self._previousPositionY, self._previousPositionZ = cc.Wrapper.GetLocalPosition(self._target)
+    self._previousPositionX, self._previousPositionY, self._previousPositionZ = cc.MoveTypeMap[self.move_type].GetFunc(self._target)
+    self._previousPositionZ = self._previousPositionZ or 0--anchored pos没有Z轴
     self._startPositionX, self._startPositionY, self._startPositionZ = self._previousPositionX, self._previousPositionY, self._previousPositionZ
 end
 
 function cc.MoveBy:update(t)
    if self._target then
-        local currentPosX, currentPosY, currentPosZ = cc.Wrapper.GetLocalPosition(self._target)
         if self._positionDeltaX and self._positionDeltaX ~= 0 then
             self._previousPositionX = self._startPositionX + (self._positionDeltaX * t)
         end
@@ -121,42 +156,56 @@ function cc.MoveBy:update(t)
         if self._positionDeltaZ and self._positionDeltaZ ~= 0 then
             self._previousPositionZ = self._startPositionZ + (self._positionDeltaZ * t)
         end
-        cc.Wrapper.SetLocalPosition(self._target, self._previousPositionX, self._previousPositionY, self._previousPositionZ)
+        cc.MoveTypeMap[self.move_type].SetFunc(self._target, self._previousPositionX, self._previousPositionY, self._previousPositionZ)
     end 
 end
-
-function cc.MoveBy:initWithDuration(duration, delta_x, delta_y, delta_z)
-    cc.ActionInterval.initWithDuration(self, duration)
-    self._positionDeltaX = delta_x
-    self._positionDeltaY = delta_y
-    self._positionDeltaZ = delta_z
-end
-
 --MoveBy end
 
 --MoveTo start
 cc.MoveTo = cc.MoveTo or BaseClass(cc.MoveBy)
+--尽量别用.New了,用create前缀的接口
 function cc.MoveTo:__init(duration, x, y, z)
-    self:initWithPos(duration, x, y, z)
+    self:initWithMoveType(duration, x, y, z, "LocalPos")
+end
+--移动节点的anchoredPosition
+function cc.MoveTo.createAnchoredType( duration, x, y )
+    local action = cc.MoveTo.New()
+    action:initWithMoveType(duration, x, y, 0, "AnchoredPos")
+    return action
+end
+--移动节点的position绝对坐标
+function cc.MoveTo.createAbsType( duration, x, y, z )
+    local action = cc.MoveTo.New()
+    action:initWithMoveType(duration, x, y, z, "Pos")
+    return action
+end
+--移动节点的localPosition
+function cc.MoveTo.createLocalType( duration, x, y, z )
+    local action = cc.MoveTo.New()
+    action:initWithMoveType(duration, x, y, z, "LocalPos")
+    return action
 end
 
-function cc.MoveTo:initWithPos(duration, x, y, z)
+function cc.MoveTo:initWithMoveType(duration, x, y, z, move_type)
     cc.ActionInterval.initWithDuration(self, duration)
-    self._endPositionX = x
-    self._endPositionY = y
-    self._endPositionZ = z
+    self.move_type = move_type
+    self._endPositionX = x or 0
+    self._endPositionY = y or 0
+    self._endPositionZ = z or 0
 end
 
 function cc.MoveTo:clone()
-    return cc.MoveTo.New(self._duration, self._endPositionX, self._endPositionY, self._endPositionZ)
+    local action = cc.MoveTo.New()
+    action:initWithMoveType(self._duration, self._endPositionX, self._endPositionY, self._endPositionZ, "LocalPos")
+    return action
 end
 
 function cc.MoveTo:startWithTarget(target)
     cc.MoveBy.startWithTarget(self, target)
-    local oldX, oldY, oldZ = cc.Wrapper.GetLocalPosition(self._target)
+    local oldX, oldY, oldZ = cc.MoveTypeMap[self.move_type].GetFunc(self._target)
     self._positionDeltaX = self._endPositionX - oldX
     self._positionDeltaY = self._endPositionY - oldY
-    self._positionDeltaZ = self._endPositionZ - oldZ
+    self._positionDeltaZ = self._endPositionZ - (oldZ or 0)
 end
 
 function cc.MoveTo:reverse()
@@ -291,9 +340,9 @@ end
 
 function cc.ScaleTo:initWithDuration(duration, sx, sy, sz)
     cc.ActionInterval.initWithDuration(self, duration)
-    self._endScaleX = sx
-    self._endScaleY = sy
-    self._endScaleZ = sz
+    self._endScaleX = sx or 1
+    self._endScaleY = sy or 1
+    self._endScaleZ = sz or 1
 end
 
 function cc.ScaleTo:clone()
