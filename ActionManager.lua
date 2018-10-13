@@ -10,6 +10,12 @@ function cc.ActionManager:init()
 
 	self._currentTarget = nil
 	self._currentTargetSalvaged = false
+
+	self:registerCocosActions()
+
+	-- UpdateBeat:Add(cc.ActionManager.Update, self)	
+	self.__update_handle = BindCallback(self, cc.ActionManager.Update)
+	UpdateManager:GetInstance():AddUpdate(self.__update_handle)	
 end
 
 function cc.ActionManager:getInstance()
@@ -69,7 +75,8 @@ function cc.ActionManager:getNumberOfRunningActionsInTarget(target)
     return 0
 end
 
-function cc.ActionManager:Update(dt)
+function cc.ActionManager:Update()
+	local deltaTime = Time.deltaTime
 	for k,v in pairs(self._targets) do
 		--unity组件释放了的话会变成null
 		if tostring(k) == "null" then
@@ -90,7 +97,7 @@ function cc.ActionManager:Update(dt)
 				        end
 
 		                self._currentTarget.currentActionSalvaged = false
-		                self._currentTarget.currentAction:step(dt)
+		                self._currentTarget.currentAction:step(deltaTime)
 
 		                if self._currentTarget.currentActionSalvaged then
 		                    self._currentTarget.currentAction = nil
@@ -183,5 +190,57 @@ function cc.ActionManager:removeAllActionsFromTarget(target)
         else
             self._targets[target] = nil
         end
+	end
+end
+
+function cc.ActionManager:registerCocosActions(  )
+	self.action_funcs = {
+		MoveTo = {func=cc.MoveTo.create, is_just_func=false, is_need_unpack=true}
+	}
+end
+
+function cc.ActionManager:registerActionFunc( action_name, func )
+	if self.action_funcs[action_name] then
+		print("Cat_Error:cc.ActionManager.lua [RegisterAction] action_name already exist!", action_name, debug.traceback())
+	end
+	self.action_funcs[action_name] = func
+end
+
+function cc.ActionManager:createActionByConfig( single_action_cfg )
+	local action_func_info = self.action_funcs[single_action_cfg.name]
+	if not action_func_info then 
+		print('Cat_Error:cc.ActionManager.lua[createActionByConfig] cannot find func for ', single_action_cfg.name, " please register it before use!")
+		return 
+	end
+	
+	if action_func_info.func then
+		if action_func_info.is_just_func then
+			return cc.CallFunc.create(action_func_info.func, single_action_cfg.param, action_func_info.is_need_unpack)
+		else
+			if action_func_info.is_need_unpack then
+				return action_func_info.func(unpack(single_action_cfg.param))
+			else
+				return action_func_info.func(single_action_cfg.param)
+			end
+		end
+	end
+end
+
+function cc.ActionManager:addActions(action_cfg, target, paused)
+	if action_cfg == nil then
+		print("Cat_Error:cc.ActionManager.lua [addActions] action_cfg is nil", debug.traceback())
+		return
+	end
+	if target == nil then
+		print("Cat_Error:cc.ActionManager.lua [addActions] target is nil", debug.traceback())
+		return
+	end
+	for i,v in ipairs(action_cfg) do
+		local actions = {}
+		for ii,vv in ipairs(v.actions) do
+			table.insert(actions, self:createActionByConfig(vv))
+		end
+		local action = cc.Sequence.New(cc.DelayTime.New(v.time), cc.Spawn.createWithTable(actions))
+		self:addAction(action, target, paused)
 	end
 end

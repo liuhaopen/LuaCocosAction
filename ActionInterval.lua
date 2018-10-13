@@ -1,7 +1,7 @@
 cc = cc or {}
 
 cc.ExtraAction = cc.ExtraAction or BaseClass(cc.FiniteTimeAction)
-function cc.ExtraAction:__init()
+function cc.ExtraAction:Constructor()
     
 end
 function cc.ExtraAction:clone()
@@ -23,7 +23,7 @@ cc.ActionInterval = cc.ActionInterval or BaseClass(cc.FiniteTimeAction)
 
 cc.ActionInterval.FLT_EPSILON = 1.192092896e-07
 
-function cc.ActionInterval:__init()
+function cc.ActionInterval:Constructor()
     self._classType = "ActionInterval"
 end
 
@@ -96,7 +96,7 @@ cc.MoveTypeMap = cc.MoveTypeMap or {
 --MoveBy start
 cc.MoveBy = cc.MoveBy or BaseClass(cc.ActionInterval)
 --别用.New了,用create前缀的接口
-function cc.MoveBy:__init(duration, delta_x, delta_y, delta_z)
+function cc.MoveBy:Constructor(duration, delta_x, delta_y, delta_z)
     self:initWithMoveType(duration, delta_x, delta_y, delta_z, "LocalPos")
 end
 --移动节点的anchoredPosition
@@ -164,7 +164,7 @@ end
 --MoveTo start
 cc.MoveTo = cc.MoveTo or BaseClass(cc.MoveBy)
 --尽量别用.New了,用create前缀的接口
-function cc.MoveTo:__init(duration, x, y, z)
+function cc.MoveTo:Constructor(duration, x, y, z)
     self:initWithMoveType(duration, x, y, z, "LocalPos")
 end
 --移动节点的anchoredPosition
@@ -217,9 +217,20 @@ end
 --Sequence start
 cc.Sequence = cc.Sequence or BaseClass(cc.ActionInterval)
 
-function cc.Sequence:__init(...)
+function cc.Sequence:Constructor()
     self._actions = {}
-    self:initWithTable({...})
+end
+
+function cc.Sequence.create( ... )
+    local action = cc.Sequence.New()
+    action:initWithTable({...})
+    return action
+end
+
+function cc.Sequence.createWithTable( action_tb )
+    local action = cc.Sequence.New()
+    action:initWithTable(action_tb)
+    return action
 end
 
 function cc.Sequence.createWithTwoActions(actionOne, actionTwo)
@@ -334,7 +345,7 @@ end
 
 cc.ScaleTo = cc.ScaleTo or BaseClass(cc.ActionInterval)
 
-function cc.ScaleTo:__init(duration, sx, sy, sz)
+function cc.ScaleTo:Constructor(duration, sx, sy, sz)
     self:initWithDuration(duration, sx, sy, sz);
 end
 
@@ -373,7 +384,7 @@ end
 --Fade start
 cc.FadeTo = cc.FadeTo or BaseClass(cc.ActionInterval)
 
-function cc.FadeTo:__init(duration, opacity)
+function cc.FadeTo:Constructor(duration, opacity)
     self:initWithDuration(duration, opacity)
 end
 
@@ -405,7 +416,7 @@ end
 
 cc.FadeIn = cc.FadeIn or BaseClass(cc.FadeTo)
 
-function cc.FadeIn:__init(d)
+function cc.FadeIn:Constructor(d)
     self:initWithDuration(d,1.0);
 end
 
@@ -427,7 +438,7 @@ end
 
 cc.FadeOut = cc.FadeOut or BaseClass(cc.FadeTo)
 
-function cc.FadeOut:__init(d)
+function cc.FadeOut:Constructor(d)
     self:initWithDuration(d,0.0)
 end
 
@@ -455,7 +466,7 @@ end
 --[rotate_type == 3 y轴]
 cc.RotateTo = cc.RotateTo or BaseClass(cc.ActionInterval)
 
-function cc.RotateTo:__init(duration, dstAngle, rotate_type)--0.1, targetRotate
+function cc.RotateTo:Constructor(duration, dstAngle, rotate_type)--0.1, targetRotate
     self._dstAngle = 0
     self._startAngle = 0
     self._diffAngle = 0
@@ -525,7 +536,7 @@ end
 --[rotate_type == 3 y轴]
 cc.RotateBy = cc.RotateBy or BaseClass(cc.ActionInterval)
 
-function cc.RotateBy:__init(duration, deltaAngle, rotate_type)
+function cc.RotateBy:Constructor(duration, deltaAngle, rotate_type)
     self._deltaAngle = 0
     self._startAngle = 0
     self:initWithDuration(duration, deltaAngle)
@@ -573,7 +584,7 @@ end
 --Repeat start
 cc.Repeat = cc.Repeat or BaseClass(cc.ActionInterval)
 
-function cc.Repeat:__init(action, times)
+function cc.Repeat:Constructor(action, times)
     self:initWithAction(action, times)
 end
 
@@ -650,7 +661,7 @@ end
 
 cc.RepeatForever = cc.RepeatForever or BaseClass(cc.ActionInterval)
 
-function cc.RepeatForever:__init(action)
+function cc.RepeatForever:Constructor(action)
     self:initWithAction(action)
 end
 
@@ -693,9 +704,21 @@ end
 --Spawn start
 cc.Spawn = cc.Spawn or BaseClass(cc.ActionInterval)
 
-function cc.Spawn:__init(...)
-    self._actions = {}
-    self:initWithTable({...})
+function cc.Spawn:Constructor()
+end
+
+function cc.Spawn.create( ... )
+    local action = cc.Spawn.New()
+    action._actions = {}
+    action:initWithTable({...})
+    return action
+end
+
+function cc.Spawn.createWithTable( action_tb )
+    local action = cc.Spawn.New()
+    action._actions = {}
+    action:initWithTable(action_tb)
+    return action
 end
 
 function cc.Spawn.createWithTwoActions(actionOne, actionTwo)
@@ -773,8 +796,13 @@ end
 
 cc.DelayTime = cc.DelayTime or BaseClass(cc.ActionInterval)
 
-function cc.DelayTime:__init(d)
-    self:initWithDuration(d);
+function cc.DelayTime:Constructor()
+end
+
+function cc.DelayTime.create(duration)
+    local action = cc.DelayTime.New()
+    action:initWithDuration(duration)
+    return action
 end
 
 function cc.DelayTime:clone()
@@ -793,7 +821,7 @@ end
 --SizeBy start
 cc.SizeBy = cc.SizeBy or BaseClass(cc.ActionInterval)
 
-function cc.SizeBy:__init(duration, delta_w, delta_h)
+function cc.SizeBy:Constructor(duration, delta_w, delta_h)
     self:initWithDuration(duration, delta_w, delta_h)
 end
 
@@ -836,7 +864,7 @@ end
 
 --SizeTo start
 cc.SizeTo = cc.SizeTo or BaseClass(cc.SizeBy)
-function cc.SizeTo:__init(duration, w, h)
+function cc.SizeTo:Constructor(duration, w, h)
     self:initWithSize(duration, w, h)
 end
 
@@ -879,7 +907,7 @@ end
 cc.BezierBy = cc.BezierBy or BaseClass(cc.ActionInterval)
 
 --t为动作时间，c为控制点信息，比如 {end_pos={x=0,y=0},control_1={x=1,y=1},control_2={x=2,y=2}}
-function cc.BezierBy:__init(t, c)
+function cc.BezierBy:Constructor(t, c)
     self:initWithDuration(t, c)
 end
 
@@ -946,7 +974,7 @@ end
 -- BezierTo start
 cc.BezierTo = cc.BezierTo or BaseClass(cc.BezierBy)
 
-function cc.BezierTo:__init(t, c)
+function cc.BezierTo:Constructor(t, c)
     self:initWithDuration(t, c)
 end
 

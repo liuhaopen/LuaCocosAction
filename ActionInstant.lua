@@ -2,7 +2,7 @@ cc = cc or {}
 
 cc.ActionInstant = cc.ActionInstant or BaseClass(cc.FiniteTimeAction)
 
-function cc.ActionInstant:__init()
+function cc.ActionInstant:Constructor()
     self._classType = "ActionInstant"
 end
     
@@ -21,12 +21,19 @@ end
 --CallFunc start
 cc.CallFunc = cc.CallFunc or BaseClass(cc.ActionInstant)
 
-function cc.CallFunc:__init(call_back)
-    self:initWithFunction(call_back)
+function cc.CallFunc:Constructor()
 end
 
-function cc.CallFunc:initWithFunction( call_back )
+function cc.CallFunc.create(call_back, param, is_need_unpack)
+    local action = cc.CallFunc.New()
+    action:initWithFunction(call_back, param, is_need_unpack)
+    return action
+end
+
+function cc.CallFunc:initWithFunction( call_back, param, is_need_unpack )
     self.call_back = call_back
+    self.param = param
+    self.is_need_unpack = is_need_unpack
 end
 
 function cc.CallFunc:clone()
@@ -39,7 +46,11 @@ end
 
 function cc.CallFunc:update(time)
     if self.call_back then
-    	self.call_back()
+        if self.is_need_unpack then
+           self.call_back(unpack(self.param))
+        else
+    	   self.call_back(self.param)
+        end
     end
 end
 --CallFunc end
@@ -48,7 +59,7 @@ end
 --Place start
 cc.Place = cc.Place or BaseClass(cc.ActionInstant)
 
-function cc.Place:__init(new_x, new_y, new_z)
+function cc.Place:Constructor(new_x, new_y, new_z)
     self:initWithPosition(new_x, new_y, new_z)
 end
 
@@ -82,7 +93,7 @@ end
 --Show start
 cc.Show = cc.Show or BaseClass(cc.ActionInstant)
 
-function cc.Show:__init()
+function cc.Show:Constructor()
 end
 
 function cc.Show:clone()
@@ -101,7 +112,7 @@ end
 --Hide start
 cc.Hide = cc.Hide or BaseClass(cc.ActionInstant)
 
-function cc.Hide:__init()
+function cc.Hide:Constructor()
 end
 
 function cc.Hide:clone()
@@ -120,7 +131,7 @@ end
 --Delete start
 cc.Delete = cc.Delete or BaseClass(cc.ActionInstant)
 
-function cc.Delete:__init()
+function cc.Delete:Constructor()
 end
 
 function cc.Delete:clone()
@@ -139,7 +150,7 @@ end
 --Alpha start
 cc.Alpha = cc.Alpha or BaseClass(cc.ActionInstant)
 
-function cc.Alpha:__init(new_alpha)
+function cc.Alpha:Constructor(new_alpha)
     self:initWithAlpha(new_alpha)
 end
 
